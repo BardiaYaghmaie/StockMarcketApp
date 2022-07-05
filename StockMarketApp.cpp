@@ -21,6 +21,7 @@ public:
 	void SetUsername(string username) { this->username = username; }
 	void SetPassword(string password) { this->password = password; }
 	void SetNationalId(string nationalId) { this->nationalId = nationalId; }
+    void SetBalance(int balance) { this->balance = balance; }
 	int GetAccountId() { return account_id; }
 	string GetName() { return name; }
 	string GetFamily() { return family; }
@@ -123,7 +124,7 @@ void EditAccount(Account* edittedAccount) {
     cout << "New Username: ";
     string e_usr;
     cin >> e_usr;
-    edittedAccount->SetUsername(e_usr);
+    Accounts.at(edittedAccount->GetAccountId())->SetUsername(e_usr);
     cout << endl;
     editpwd:
     cout << "Enter Current Password: ";
@@ -140,7 +141,7 @@ void EditAccount(Account* edittedAccount) {
 		    string conf;
 		    cin >> conf;
 		    if (conf == n_pwd)
-			    edittedAccount->SetPassword(n_pwd);
+                Accounts.at(edittedAccount->GetAccountId())->SetPassword(n_pwd);
 		    else {
 			    cout << "\n\t Passwords Do Not Match\n" << endl;
 			    goto confirm;
@@ -151,7 +152,7 @@ void EditAccount(Account* edittedAccount) {
         }
     }
     else {
-        cout << "\nCurrent Password Is Wrong\n" << endl;
+        cout << "\n\tCurrent Password Is Wrong\n" << endl;
         goto editpwd;
     }
     cout << "\n\t Edit Succeeded \n " << endl;
@@ -213,7 +214,7 @@ firstpage:
 	case 2: {
 	login:
 		bool flag = LoginAccount();
-        //bool flag = true;
+       // bool flag = true;
 		if (flag)
 		{
 			goto panel;
@@ -244,18 +245,29 @@ panel2:
 	switch (cmd) {
 	case 1: {
 
-		//RegisterArticle();
+		cout << "\n\t MARKET \n" << endl;
 		goto panel2;
 
 	}
 	case 2:
-		//ShowAllArticles();
+    	cout << "\n\t MARKET \n" << endl;
 		goto panel2;
 	case 3: {
-
+        cout << "\n\t SELL \n" << endl;
+		goto panel2;
 	}
-    case 4: {}
-    case 5: {}
+    case 4: {
+        cout << "\n\t BUY \n" << endl;
+		goto panel2;}
+    case 5: {
+        cout << "\n\t ACCOUNT CHARGING \n" << endl;
+        cout << "How Much You Wanna Charge Your Account (In Dollars): ";
+        int chargingAmount;
+        cin >> chargingAmount;
+        LoggedInAcc.SetBalance(LoggedInAcc.GetBalance() + chargingAmount);
+        cout << "\n\t Account Charged " << LoggedInAcc.GetBalance() << "$\n" << endl;
+		goto panel2;
+    }
     case 6: {
         EditAccount(&LoggedInAcc);
         goto panel2;
@@ -276,3 +288,4 @@ panel2:
 
 	return 0;
 }
+
