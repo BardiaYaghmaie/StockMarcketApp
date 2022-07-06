@@ -148,7 +148,7 @@ vector<Share*> ReadSharesFromFile(string fileName) {
 }
 vector<Share*> SharesInFile = ReadSharesFromFile(FileName);
 
-Share* FindShareBySymbol(string symbol){
+Share* FindShareBySymbolInMarket(string symbol){
     for (int i = 0; i < SharesInFile.size(); i++) {
         if (symbol == SharesInFile.at(i)->GetSymbol()) {
             return SharesInFile.at(i);
@@ -329,6 +329,26 @@ void CSVToArray(string) {
 
 }
 vector<Share*> market = ReadSharesFromFile(FileName);
+float CalculateSumProperty(Account* acc){
+    float result = 0;
+    for (int i = 0; i < market.size(); i++)
+    {
+        result +=  acc->shares.at(i).first->GetValue() * acc->shares.at(i).second;
+    }
+    return result;
+    
+}
+pair<Share*, float> FindShareBySymbolInWallet(Account* acc, string symbol) { 
+    for (int i = 0; i < acc->shares.size(); i++) {
+        if (symbol == acc->shares.at(i).first->GetSymbol()) {
+            pair<Share*, float> curr;
+            curr.first = acc->shares.at(i).first;
+            curr.second = acc->shares.at(i).second;
+            return curr;
+        }
+    }
+    
+}
 
 int main() {
 firstpage:
@@ -373,7 +393,7 @@ panel:
 panel2:
 	cout << "-------------------------------------------------\nDashboard\n" << endl;
 	cout << "\t\t\t\t Balance: " << LoggedInAcc.GetBalance() << endl;
-	cout << "\t\t\t\t Stock Property Value: " << LoggedInAcc.GetSumProp() << "\n\n" << endl;
+	cout << "\t\t\t\t Stock Property Value: " << CalculateSumProperty(&LoggedInAcc) << "\n\n" << endl;
     cout << "\t1. Market            2.Wallet\n" << endl;
     cout << "\t3. Sell              4.Buy\n" << endl;
     cout << "\t5. Charge Account    6. Edit Profile\n" << endl;
@@ -404,10 +424,28 @@ panel2:
         if (cnt == 0) {
             cout << "\n\tWALLET IS EMPTY\n" << endl;
         }
-        getchar();
 		goto panel2;
     }    
 	case 3: {
+        cout << "\n\tSELL\n" << endl;
+        cout << "Which Share of Yours You Want To Sell: ";
+        string sym;
+        cin >> sym;
+        cout << "Share Unit: ";
+        float unit;
+        cin >> unit;
+        if (unit <= FindShareBySymbolInWallet(&LoggedInAcc, sym).second) {
+            for (int i = 0; i < LoggedInAcc.shares.size(); i++) {
+                if (LoggedInAcc.shares.at(i).first->GetSymbol() == sym) {
+                    LoggedInAcc.shares.at(i).second -= unit;
+                    LoggedInAcc.SetBalance(LoggedInAcc.GetBalance() + (unit * LoggedInAcc.shares.at(i).first->GetValue()));
+                    break;
+                }
+            }
+
+        }
+
+
         
 	}
     case 4: {
@@ -418,13 +456,13 @@ panel2:
         string sym;
         cin >> sym;
         cout << endl;
-        if (FindShareBySymbol(sym)){
+        if (FindShareBySymbolInMarket(sym)){
             cout << "Share Unit (0.001 ~ 100): ";
             float unit;
             cin >> unit;
-            if (unit * FindShareBySymbol(sym)->GetValue() < LoggedInAcc.GetBalance()) {
+            if (unit * FindShareBySymbolInMarket(sym)->GetValue() < LoggedInAcc.GetBalance()) {
                 pair<Share*, float> curr;
-                curr.first = FindShareBySymbol(sym);
+                curr.first = FindShareBySymbolInMarket(sym);
                 curr.second = unit;
                 for (int i = 0; i < LoggedInAcc.shares.size(); i++) {
                     if (LoggedInAcc.shares.at(i).first->GetSymbol() == sym){
