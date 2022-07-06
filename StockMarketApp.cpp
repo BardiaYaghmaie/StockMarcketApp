@@ -2,6 +2,8 @@
 #include<iostream>
 #include<string>
 #include<vector>
+#include <fstream>
+#include <utility>
 using namespace std;
 
 class Share;
@@ -12,8 +14,8 @@ class Account {
 	int accountNumber, iban;
 	int balance, debt;
 	int sumProperty;
-	vector<Share> shares;
 public:
+	vector< pair<Share*, float> > shares;
 	static int AccountCount;
 	void SetAccountId(int account_id) { this->account_id = account_id; }
 	void SetName(string name) { this->name = name; }
@@ -30,16 +32,143 @@ public:
 	string GetPassword() { return password; }
     int GetBalance() { return balance; }
     int GetSumProp() { return sumProperty; }
-	//friend class Share;    
+	friend class Share;    
 };
 int Account::AccountCount = 0;
 vector<Account*> Accounts;
 class Share {
+private:
 	string title, symbol;
-	int value;
-	int marketCapacity;
+	double value;
+	long double marketCapacity;
+	int id;
 
+public:
+	void SetTitle(string title) { this->title = title; }
+	void SetSymbol(string symbol) { this->symbol = symbol; }
+	void SetValue(double value) { this->value = value; }
+	void SetMarketCapacity(double marketCapacity) { this->marketCapacity = marketCapacity; }
+	string GetTitle() { return title; }
+	string GetSymbol() { return symbol; }
+	double GetValue() { return this->value; }
+	double GetMarketCapacity() { return marketCapacity; }
+	int GetId() { return this->id; }
+	void SetId(int id) { this->id = id; }
 };
+
+Share* Parse(string text) {
+	int index = text.find(",");
+
+	Share* share = new Share();
+	string id_string = text.substr(0, index);
+	share->SetId(stoi(id_string));
+	text.erase(0, index + 1);
+
+
+
+	index = text.find(",");
+	string symbol = text.substr(0, index);
+	share->SetSymbol(symbol);
+	text.erase(0, index + 1);
+
+
+
+
+	string title;
+	int index_first_double_quote = text.find("\"");
+	index = text.find(",");
+	string temp = text;
+	int index_second_double_quote = -1;
+
+	if (index_first_double_quote != -1)
+	{
+		temp.erase(index_first_double_quote, index_first_double_quote + 1);
+		index_second_double_quote = temp.find("\"");
+		index_second_double_quote++;
+
+	}
+
+	if (index_first_double_quote != -1 &&
+		index_second_double_quote != -1
+		&& index > index_first_double_quote && index < index_second_double_quote)
+	{
+		title = text.substr(index_first_double_quote + 1, index_second_double_quote - 1);
+		share->SetTitle(title);
+		text.erase(index_first_double_quote, index_second_double_quote + 2);
+
+	}
+	else {
+		title = text.substr(0, index);
+		share->SetTitle(title);
+		text.erase(0, index + 1);
+	}
+
+
+
+
+
+	index = text.find(",");
+	string value_string = text.substr(0, index);
+	long double x = stold(value_string);
+	share->SetValue(x);
+	text.erase(0, index + 1);
+
+
+	index = text.find(",");
+	string marketCapacity = text.substr(0, index);
+	share->SetMarketCapacity(stold(marketCapacity));
+	text.erase(0, index + 1);
+
+
+	return share;
+}
+const string FileName = "stock_market_data.csv";
+vector<Share*> ReadSharesFromFile(string fileName) {
+	vector<Share*> result;
+	ifstream input(fileName, ios::in);
+	if (!input)
+	{
+		cout << "can not open the file";
+		throw "error";
+	}
+	else {
+		string text;
+		int counter = 0;
+		while (getline(input, text))
+		{
+			if (counter > 0)
+			{
+				Share* share = Parse(text);
+				result.push_back(share);
+			}
+			counter++;
+		}
+		return result;
+	}
+}
+vector<Share*> SharesInFile = ReadSharesFromFile(FileName);
+
+Share* FindShareBySymbol(string symbol){
+    for (int i = 0; i < SharesInFile.size(); i++) {
+        if (symbol == SharesInFile.at(i)->GetSymbol()) {
+            return SharesInFile.at(i);
+        }
+    }
+    return NULL;
+}
+void ShowWallet();
+void WriteShareToFile(string fileName, Share share) {
+	fstream output(fileName, ios::app);
+	if (!output)
+	{
+		cout << "can not write to file";
+	}
+	else {
+		output << share.GetId() << "#" << share.GetSymbol() << "#" << share.GetTitle() << "#" << share.GetValue()
+			<< "#" << share.GetMarketCapacity() << "\n";
+		
+	}
+}
 bool IsStrongPassword(string input) {
 	int n = input.length();
 	// Checking lower alphabet in string
@@ -152,7 +281,7 @@ void EditAccount(Account* edittedAccount) {
         }
     }
     else {
-        cout << "\n\tCurrent Password Is Wrong\n" << endl;
+        cout << "\nCurrent Password Is Wrong\n" << endl;
         goto editpwd;
     }
     cout << "\n\t Edit Succeeded \n " << endl;
@@ -199,6 +328,7 @@ bool LoginAccount() {
 void CSVToArray(string) {
 
 }
+vector<Share*> market = ReadSharesFromFile(FileName);
 
 int main() {
 firstpage:
@@ -214,9 +344,10 @@ firstpage:
 	case 2: {
 	login:
 		bool flag = LoginAccount();
-       // bool flag = true;
+        //bool flag = true;
 		if (flag)
 		{
+  
 			goto panel;
 
 		}
@@ -231,6 +362,13 @@ firstpage:
 
 	}
 panel:
+    for (int i = 0; i < market.size(); i++) {
+        pair<Share*, float> curr;
+        curr.first =market.at(i);
+        curr.second = 0;
+        LoggedInAcc.shares.push_back(curr);
+            
+    }
 	cout << "\n\tWelcome " << LoggedInAcc.GetUsername() << " :)\n" << endl;
 panel2:
 	cout << "-------------------------------------------------\nDashboard\n" << endl;
@@ -246,19 +384,68 @@ panel2:
 	case 1: {
 
 		cout << "\n\t MARKET \n" << endl;
+        cout << "  #    Symbol        Title        Value    MarketCap\n " << endl;
+        for (int i = 0; i < market.size(); i++) {
+            cout << "  " << market[i]->GetId() <<"     "<< market[i]->GetSymbol()<<"     " << market[i]->GetTitle()<<"     " << market[i]->GetValue()<<"     " << market[i]->GetMarketCapacity()<<"     " << endl;
+        }
 		goto panel2;
 
 	}
-	case 2:
-    	cout << "\n\t MARKET \n" << endl;
+	case 2: {
+    cout << "\n\t WALLET \n" << endl;
+        int cnt = 0;
+        for (int i = 0; i < market.size(); i++) {
+            if (LoggedInAcc.shares.at(i).second != 0) {
+                cout << "[*]\n\t" << LoggedInAcc.shares.at(i).second << LoggedInAcc.shares.at(i).first->GetSymbol() << "     Share Value: "
+                << LoggedInAcc.shares.at(i).first->GetValue() * LoggedInAcc.shares.at(i).second << "\n\n";
+                cnt++;
+            }
+        }
+        if (cnt == 0) {
+            cout << "\n\tWALLET IS EMPTY\n" << endl;
+        }
+        getchar();
 		goto panel2;
+    }    
 	case 3: {
-        cout << "\n\t SELL \n" << endl;
-		goto panel2;
+        
 	}
     case 4: {
+        
         cout << "\n\t BUY \n" << endl;
-		goto panel2;}
+        buy:
+        cout << "Share On The Market List You Want To Buy (Symbol): ";
+        string sym;
+        cin >> sym;
+        cout << endl;
+        if (FindShareBySymbol(sym)){
+            cout << "Share Unit (0.001 ~ 100): ";
+            float unit;
+            cin >> unit;
+            if (unit * FindShareBySymbol(sym)->GetValue() < LoggedInAcc.GetBalance()) {
+                pair<Share*, float> curr;
+                curr.first = FindShareBySymbol(sym);
+                curr.second = unit;
+                for (int i = 0; i < LoggedInAcc.shares.size(); i++) {
+                    if (LoggedInAcc.shares.at(i).first->GetSymbol() == sym){
+                        LoggedInAcc.shares.at(i).second += unit;
+                        LoggedInAcc.SetBalance(LoggedInAcc.GetBalance() - unit*LoggedInAcc.shares.at(i).first->GetValue());
+                        break;
+                    }
+        
+                }
+                cout << "\n\tSuccesful Buy!\n" << endl;
+            }
+            else {
+                cout << "\n\tNot Enough Balane To Buy This Share\n" << endl;
+                goto panel2;
+            }
+
+        }
+        else
+            goto buy;
+		goto panel2;
+        }
     case 5: {
         cout << "\n\t ACCOUNT CHARGING \n" << endl;
         cout << "How Much You Wanna Charge Your Account (In Dollars): ";
