@@ -118,7 +118,6 @@ Share* Parse(string text) {
 	string marketCapacity = text.substr(0, index);
 	share->SetMarketCapacity(stold(marketCapacity));
 	text.erase(0, index + 1);
-    
 
 
 	return share;
