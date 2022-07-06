@@ -118,6 +118,7 @@ Share* Parse(string text) {
 	string marketCapacity = text.substr(0, index);
 	share->SetMarketCapacity(stold(marketCapacity));
 	text.erase(0, index + 1);
+    
 
 
 	return share;
@@ -338,7 +339,10 @@ float CalculateSumProperty(Account* acc){
     return result;
     
 }
-pair<Share*, float> FindShareBySymbolInWallet(Account* acc, string symbol) { 
+pair<Share*, float> FindShareBySymbolInWallet(Account* acc, string symbol) {
+    pair<Share*, float> def;
+    def.first = nullptr;
+    def.second = 0;
     for (int i = 0; i < acc->shares.size(); i++) {
         if (symbol == acc->shares.at(i).first->GetSymbol()) {
             pair<Share*, float> curr;
@@ -347,7 +351,7 @@ pair<Share*, float> FindShareBySymbolInWallet(Account* acc, string symbol) {
             return curr;
         }
     }
-    
+    return def;
 }
 
 int main() {
@@ -446,7 +450,7 @@ panel2:
         }
 
 
-        
+        goto panel2;
 	}
     case 4: {
         
